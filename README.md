@@ -3,14 +3,4 @@ Quantixy is proxy which auto-sleeps and wakes Docker containers when the website
 
 
 
-Let me know if you want:
-
-a logo mockup (sci-fi, minimal, retro, etc.)
-
-a badge for GitHub
-
-a CLI command wrapper (quantixy start, etc.)
-
-or a one-liner installer/setup script (for sharing)
-
-This is ready to be a cool open source tool if you want to publish it.
+on private GIT
