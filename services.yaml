@@ -1,0 +1,5 @@
+domain.tld:
+  container: name
+  port: 1234
+  protocol: http # https
+  websocket: true # false
