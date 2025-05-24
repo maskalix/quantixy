@@ -1,4 +1,5 @@
-![Logo](github/logo.png)
+<img src="github/logo.png" alt="Logo" width="150"/>
+
 # Quantixy — Schrödinger’s Proxy
 Quantixy is proxy which auto-sleeps and wakes Docker containers when the website is reached. Containers are both running and not running until someone checks. A dynamic nginx-based proxy system for managing (auto-start and shutdown) multiple containerized services with automatic routing and failover capabilities.
 
