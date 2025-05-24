@@ -311,8 +311,14 @@ python3 /app/inactivity_monitor.py &
 echo "Timeout set to: $TIMEOUT_MINUTES minutes"
 echo "Verbose logging: $VERBOSE_LOGGING"
 echo "🪄 Quantixy is now running"
-# Keep the container running until timeout occurs
-if [ "$VERBOSE_LOGGING" = "true" ]; then
-    tail -f /var/log/nginx/access.log
-fi
 
+# Keep the container running
+if [ "$VERBOSE_LOGGING" = "true" ]; then
+    # Show nginx logs in verbose mode
+    tail -f /var/log/nginx/access.log
+else
+    # Keep container alive without showing logs
+    while true; do
+        sleep 3600 # Sleep for 1 hour, then repeat
+    done
+fi
