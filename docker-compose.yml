@@ -2,14 +2,12 @@ services:
   quantixy:
     build: .
     container_name: quantixy
+    ports:
+      - 8888:80
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./services.yaml:/etc/quantixy/services.yaml
     environment:
-      - TIMEOUT_MINUTES=10    
-    networks:
-      - reverseproxy
-
-networks:
-  reverseproxy:
-    external: true
+      - TIMEOUT_MINUTES=10  
+      - VERBOSE_LOGGING=false
+      #- LOADING_PAGE_PATH=
