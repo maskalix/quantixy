@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Quantixy</title>
+		<link
+			rel="icon"
+			href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 625 625'%3E%3Cg transform='translate(0,625) scale(0.1,-0.1)' fill='%23000000' stroke='none'%3E%3Cpath d='M 750,4516 V 1840 C 3184,350 3181.7097,348.58436 3184,350 l 1414,874 c 0,0 -314.5539,217.5246 -317,216 L 3190,760 1111,2045 v 2280 l 2073,1235 c 9.494,5.6561 2076,-1234 2076,-1234 V 2042 l -320,-216 -1351,926 -339,-228 c -2.8622,-1.925 0,0 413,-284 -477,-310 -469.6913,-314.5195 -477,-310 l -1056,653 v 1173 c 0,0 1044.9283,644.7777 1050,645 575.1873,-360.7107 0,0 1045,-638 l 10,-1218 347,-225 c 6.5546,-4.2501 0,0 8,1658 L 3186,4824 1770,3970 c 1,-1605 0,0 1,-1605 1409,-866 1169.0031,-710.2125 1409,-866 l 824,511 c 0,0 0,-3.4435 885,-611.4435 L 5620,1835 5615,4524 3175.0864,5983.2611 Z'/%3E%3C/g%3E%3C/svg%3E"
+		/>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+				font-family: "Jost", sans-serif;
+			}
+			body {
+				background: linear-gradient(
+					135deg,
+					#d2d2d2 0%,
+					#c8c8c8 25%,
+					#b8b8b8 50%,
+					#c8c8c8 75%,
+					#d2d2d2 100%
+				);
+				color: #ffffff;
+				height: 100vh;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				overflow: hidden;
+			}
+
+			.container {
+				text-align: center;
+				z-index: 10;
+			}
+
+			svg {
+				width: 150px;
+				height: min-content;
+				margin-bottom: 1rem;
+			}
+
+			.title {
+				font-size: 2.5rem;
+				margin-bottom: 3rem;
+				color: #202020;
+			}
+
+			.domain-info {
+				font-size: 0.9rem;
+				margin-bottom: 2rem;
+				padding: 0.5rem;
+				background: rgba(63, 63, 63, 0.1);
+				border: 1px solid rgba(84, 84, 84, 0.3);
+				border-radius: 8px;
+				backdrop-filter: blur(10px);
+				color: #656565;
+			}
+
+			#current-domain {
+				font-weight: bold;
+				color: #404040;
+			}
+
+			.loading-spinner {
+				width: 40px;
+				height: 40px;
+				border: 6px solid rgba(11, 11, 11, 0.267);
+				border-top: 6px solid #000000;
+				border-radius: 50%;
+				animation: spin 2s linear infinite;
+				margin: 0 auto 2rem;
+			}
+
+			.reload-info {
+				font-size: 0.95rem;
+				color: #555555;
+				margin-top: 1rem;
+			}
+			#countdown {
+				font-weight: bold;
+				color: #333333;
+			}
+			.author {
+				font-size: 0.8rem;
+				color: #777777;
+				margin-top: 2rem;
+				opacity: 0.7;
+			}
+
+			.footer {
+				position: fixed;
+				bottom: 10px;
+				left: 50%;
+				transform: translateX(-50%);
+				font-size: 0.75rem;
+				color: #888888;
+				opacity: 0.8;
+				z-index: 15;
+			}
+
+			.footer a {
+				color: #666666;
+				text-decoration: none;
+				transition: color 0.3s ease;
+			}
+
+			.footer a:hover {
+				color: #404040;
+				text-decoration: underline;
+			}
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+
+			/* Particles */
+			.particles {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				pointer-events: none;
+				z-index: 1;
+			}
+
+			.particle {
+				position: absolute;
+				opacity: 0.3;
+			}
+
+			.particle-line {
+				width: 10px;
+				height: 4px;
+				background: #6c87e080;
+				border-radius: 1px;
+				animation: float-line 15s linear infinite;
+			}
+			.particle-circle {
+				width: 12px;
+				height: 12px;
+				background: #255bac81;
+				border-radius: 50%;
+				animation: float-circle 20s linear infinite;
+			}
+
+			.particle-symbol {
+				font-size: 20px;
+				color: #1c3de289;
+				font-weight: bold;
+				animation: float-diagonal 10s ease-in-out infinite;
+			}
+			@keyframes float-line {
+				0% {
+					transform: translateX(0) translateY(0) rotate(0deg);
+					opacity: 0;
+				}
+				20% {
+					opacity: 0.3;
+				}
+				80% {
+					opacity: 1;
+				}
+				100% {
+					transform: translateX(20px) translateY(10px) rotate(180deg);
+					opacity: 0;
+				}
+			}
+			@keyframes float-circle {
+				0% {
+					transform: translateX(0) translateY(0) scale(0.8);
+					opacity: 0;
+				}
+				20% {
+					opacity: 0.6;
+				}
+				80% {
+					opacity: 1;
+				}
+				100% {
+					transform: translateX(-15px) translateY(15px) scale(1.2);
+					opacity: 0;
+				}
+			}
+
+			@keyframes float-diagonal {
+				0% {
+					transform: translateX(0) translateY(0) rotate(0deg);
+					opacity: 0;
+				}
+				20% {
+					opacity: 0.25;
+				}
+				80% {
+					opacity: 1;
+				}
+				100% {
+					transform: translateX(-10px) translateY(-10px)
+						rotate(110deg);
+					opacity: 0;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="particles" id="particles"></div>
+		<div class="container">
+			<svg
+				version="1.0"
+				width="625.000000pt"
+				height="625.000000pt"
+				viewBox="0 0 625.000000 625.000000"
+				preserveAspectRatio="xMidYMid meet"
+			>
+				<g
+					transform="translate(0.000000,625.000000) scale(0.100000,-0.100000)"
+					fill="#000000"
+					stroke="none"
+					id="g1"
+				>
+					<path
+						d="M 750,4516 V 1840 C 3184,350 3181.7097,348.58436 3184,350 l 1414,874 c 0,0 -314.5539,217.5246 -317,216 L 3190,760 1111,2045 v 2280 l 2073,1235 c 9.494,5.6561 2076,-1234 2076,-1234 V 2042 l -320,-216 -1351,926 -339,-228 c -2.8622,-1.925 0,0 413,-284 -477,-310 -469.6913,-314.5195 -477,-310 l -1056,653 v 1173 c 0,0 1044.9283,644.7777 1050,645 575.1873,-360.7107 0,0 1045,-638 l 10,-1218 347,-225 c 6.5546,-4.2501 0,0 8,1658 L 3186,4824 1770,3970 c 1,-1605 0,0 1,-1605 1409,-866 1169.0031,-710.2125 1409,-866 l 824,511 c 0,0 0,-3.4435 885,-611.4435 L 5620,1835 5615,4524 3175.0864,5983.2611 Z"
+						id="path1"
+						sodipodi:nodetypes="ccssscccsccccscscccccscccccsccccc"
+					/>
+				</g>
+			</svg>
+
+			<h1 class="title">Quantixy</h1>
+
+			<div class="loading-spinner"></div>
+			<div class="domain-info">
+				Starting services for:
+				<span id="current-domain">loading...</span>
+			</div>
+			<div class="reload-info">
+				Reloads in <span id="countdown">8</span> seconds...
+			</div>
+		</div>
+
+		<div class="footer">
+			Created by <a href="https://lnln.eu" target="_blank">LNLN.eu</a>
+		</div>
+
+		<script>
+			// Get and display current domain from the file written by entrypoint script
+			async function updateCurrentDomain() {
+				try {
+					const response = await fetch("/current_domain.txt");
+					if (response.ok) {
+						const domain = await response.text();
+						document.getElementById("current-domain").textContent =
+							domain.trim() || window.location.hostname;
+					} else {
+						// Fallback to hostname if file doesn't exist
+						document.getElementById("current-domain").textContent =
+							window.location.hostname;
+					}
+				} catch (error) {
+					// Fallback to hostname if fetch fails
+					document.getElementById("current-domain").textContent =
+						window.location.hostname;
+				}
+			}
+
+			// Countdown timer
+			let countdown = 8;
+			const countdownElement = document.getElementById("countdown");
+
+			const countdownInterval = setInterval(() => {
+				countdown--;
+				countdownElement.textContent = countdown;
+
+				if (countdown <= 0) {
+					clearInterval(countdownInterval);
+					window.location.reload();
+				}
+			}, 1000); // Update domain immediately
+			updateCurrentDomain(); // Create particles
+			function createParticles() {
+				const particlesContainer = document.getElementById("particles");
+
+				// Calculate grid density - approximately 1 particle per 100x100px
+				const screenWidth = window.innerWidth;
+				const screenHeight = window.innerHeight;
+				const particlesX = Math.ceil(screenWidth / 75);
+				const particlesY = Math.ceil(screenHeight / 80);
+				const totalParticles = particlesX * particlesY; // Create particles randomly positioned across the screen
+				for (let i = 0; i < totalParticles; i++) {
+					const particleType = Math.random();
+					let particle;
+
+					if (particleType < 0.3) {
+						// 30% lines
+						particle = document.createElement("div");
+						particle.classList.add("particle", "particle-line");
+						particle.style.animation =
+							"float-line 4s ease-in-out infinite";
+					} else if (particleType < 0.5) {
+						// 20% circles
+						particle = document.createElement("div");
+						particle.classList.add("particle", "particle-circle");
+						particle.style.animation =
+							"float-circle 5s ease-in-out infinite";
+					} else if (particleType < 0.8) {
+						// 30% symbols
+						particle = document.createElement("div");
+						particle.classList.add("particle", "particle-symbol");
+						const symbols = [
+							">",
+							"<",
+							"+",
+							"*",
+							"×",
+							"~",
+							"^",
+							"•",
+							"◦",
+							"▪",
+							"▫",
+						];
+						particle.textContent =
+							symbols[Math.floor(Math.random() * symbols.length)];
+						particle.style.animation =
+							"float-diagonal 3s ease-in-out infinite";
+					} else {
+						// 20% small dots
+						particle = document.createElement("div");
+						particle.classList.add("particle");
+						particle.style.width = "2px";
+						particle.style.height = "2px";
+						particle.style.background = "#aaa";
+						particle.style.borderRadius = "50%";
+						particle.style.opacity = "0.15";
+						particle.style.animation =
+							"float-diagonal 3s ease-in-out infinite";
+					}
+
+					// Random position across entire screen
+					particle.style.left = Math.random() * 100 + "vw";
+					particle.style.top = Math.random() * 100 + "vh";
+
+					// Random animation delay for natural appearance
+					particle.style.animationDelay = Math.random() * 8 + "s";
+
+					particlesContainer.appendChild(particle);
+				}
+
+				// Continuously spawn new particles
+				setInterval(() => {
+					if (
+						particlesContainer.children.length <
+						totalParticles * 1.5
+					) {
+						const newParticle = document.createElement("div");
+						const type = Math.random();
+
+						if (type < 0.3) {
+							newParticle.classList.add(
+								"particle",
+								"particle-line"
+							);
+							newParticle.style.animation =
+								"float-line 4s ease-in-out infinite";
+						} else if (type < 0.5) {
+							newParticle.classList.add(
+								"particle",
+								"particle-circle"
+							);
+							newParticle.style.animation =
+								"float-circle 5s ease-in-out infinite";
+						} else {
+							// Add symbols to continuously spawned particles too
+							newParticle.classList.add(
+								"particle",
+								"particle-symbol"
+							);
+							const symbols = [
+								">",
+								"<",
+								"+",
+								"-",
+								"*",
+								"×",
+								"÷",
+								"~",
+								"^",
+								"•",
+								"◦",
+								"▪",
+								"▫",
+							];
+							newParticle.textContent =
+								symbols[
+									Math.floor(Math.random() * symbols.length)
+								];
+							newParticle.style.animation =
+								"float-diagonal 3s ease-in-out infinite";
+						}
+
+						newParticle.style.left = Math.random() * 100 + "vw";
+						newParticle.style.top = Math.random() * 100 + "vh";
+
+						particlesContainer.appendChild(newParticle);
+
+						// Remove particle after animation
+						setTimeout(() => {
+							if (newParticle.parentNode) {
+								newParticle.parentNode.removeChild(newParticle);
+							}
+						}, 5000);
+					}
+				}, 500);
+			}
+
+			// Initialize particles
+			createParticles();
+		</script>
+	</body>
+</html>
