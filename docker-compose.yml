@@ -1,0 +1,15 @@
+services:  
+  quantixy:
+    build: .
+    container_name: quantixy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./services.yaml:/etc/quantixy/services.yaml
+    environment:
+      - TIMEOUT_MINUTES=10    
+    networks:
+      - reverseproxy
+
+networks:
+  reverseproxy:
+    external: true
