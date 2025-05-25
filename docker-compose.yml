@@ -9,7 +9,7 @@ services:
       - ./services.yaml:/etc/quantixy/services.yaml
     environment:
       TIMEOUT_MINUTES: 10
-      VERBOSE_LOGGING: true
+      VERBOSE_LOGGING: false
       #LOADING_PAGE_PATH:
       QUANTIXY__exemple.com__container: test
       QUANTIXY__exemple.com__port: 1234

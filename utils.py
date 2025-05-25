@@ -1,4 +1,6 @@
+import logging
 import os
+import sys
 
 import yaml
 
@@ -41,5 +43,10 @@ def load_services_config():
             print(f"❌ Services config file not found: {SERVICES_CONFIG}")
         except yaml.YAMLError as e:
             print(f"❌ Failed to parse YAML file: {e}")
+
+    if os.environ.get('VERBOSE_LOGGING', 'false').lower() in ('true', '1', 'yes'):
+        logger = logging.getLogger('debug')
+        logger.info("🔧 Loaded services configuration:")
+        logger.info(yaml.dump(services_data, default_flow_style=False))
 
     return services_data

@@ -30,6 +30,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger('inactivity_monitor')
 
+# create stdout logger
+STDOUT_LOGGER = logging.StreamHandler(sys.stdout) if VERBOSE_LOGGING else None
+
 # Configuration
 TIMEOUT_MINUTES = int(os.environ.get('TIMEOUT_MINUTES', '10'))
 LAST_ACCESS_DIR = Path('/tmp/quantixy_last_access')
