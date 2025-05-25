@@ -6,14 +6,13 @@ RUN apk add --no-cache \
     bash \
     curl \
     yq \
-    python3
+    python3 \
+    py3-pip
 
 COPY requirements.txt /app/requirements.txt
 
 # pip install
-RUN python3 -m ensurepip && \
-    pip3 install --no-cache --upgrade pip && \
-    pip3 install -r requirements.txt
+RUN pip3 install --break-system-packages -r /app/requirements.txt
 
 # Create required directories and log files
 RUN mkdir -p /etc/quantixy /tmp/quantixy_last_access /app /var/log/nginx && \
@@ -36,6 +35,8 @@ COPY log_monitor.py /app/log_monitor.py
 
 # Copy inactivity monitor
 COPY inactivity_monitor.py /app/inactivity_monitor.py
+
+COPY utils.py /app/utils.py
 
 # Copy entrypoint script and make it executable
 COPY entrypoint.sh /entrypoint.sh
