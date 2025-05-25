@@ -16,6 +16,8 @@ import datetime
 import sys
 from pathlib import Path
 
+from utils import load_services_config
+
 # Configure logging based on VERBOSE_LOGGING environment variable
 VERBOSE_LOGGING = os.environ.get('VERBOSE_LOGGING', 'false').lower() in ('true', '1', 'yes')
 
@@ -32,7 +34,6 @@ logger = logging.getLogger('inactivity_monitor')
 TIMEOUT_MINUTES = int(os.environ.get('TIMEOUT_MINUTES', '10'))
 LAST_ACCESS_DIR = Path('/tmp/quantixy_last_access')
 CHECK_INTERVAL = 30  # Check half minute
-SERVICES_CONFIG = '/etc/quantixy/services.yaml'
 
 if VERBOSE_LOGGING:
     logger.info(f"Inactivity monitor started with timeout: {TIMEOUT_MINUTES} minutes")
@@ -40,17 +41,25 @@ if VERBOSE_LOGGING:
 else:
     logger.warning(f"Inactivity monitor started (timeout: {TIMEOUT_MINUTES}m, verbose: {VERBOSE_LOGGING})")
 
+
 def get_containers():
-    """Get list of container names from services.yaml using yq"""
+    """Get list of container names from services.yaml using native Python libraries"""
     try:
-        result = subprocess.run(
-            ['yq', 'e', ".* | select(has(\"container\")) | .container", SERVICES_CONFIG],
-            capture_output=True, text=True, check=True
-        )
-        containers = [c.strip() for c in result.stdout.splitlines() if c.strip()]
-        return containers
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to read containers: {e}")
+        services_data = load_services_config()
+
+        if not services_data:
+            logger.error("Services configuration is empty or invalid")
+            return []
+
+        # Extract containers from the YAML data
+        containers = [
+            service.get('container')
+            for service in services_data.values()
+            if isinstance(service, dict) and 'container' in service
+        ]
+        return [c for c in containers if c]  # Filter out None values
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
         return []
 
 def check_container_running(container_name):

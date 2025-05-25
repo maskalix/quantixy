@@ -8,6 +8,13 @@ RUN apk add --no-cache \
     yq \
     python3
 
+COPY requirements.txt /app/requirements.txt
+
+# pip install
+RUN python3 -m ensurepip && \
+    pip3 install --no-cache --upgrade pip && \
+    pip3 install -r requirements.txt
+
 # Create required directories and log files
 RUN mkdir -p /etc/quantixy /tmp/quantixy_last_access /app /var/log/nginx && \
     touch /var/log/nginx/access.log /var/log/nginx/error.log
