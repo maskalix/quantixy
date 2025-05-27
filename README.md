@@ -87,12 +87,12 @@ Services are configured through `services.yaml` (implementation pending). Exampl
 
 ```yaml
 services:
-    - domain: example.com
+      domain: example.com
       container: my_example_app
       port: 8000
       websocket: false
 
-    - domain: ws.example.com
+      domain: ws.example.com
       container: my_ws_app
       port: 3000
       websocket: true
