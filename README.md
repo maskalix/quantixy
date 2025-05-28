@@ -91,16 +91,24 @@ Services are configured through `services.yaml` (implementation pending) or envi
 
 #### service.yaml:
 ```yaml
-services:
-    - domain: example.com
-      container: my_example_app
-      port: 8000
-      websocket: false
+example.com:
+  container: my_example_app
+  port: 8000
+  websocket: false
+  protocol: http
 
-    - domain: ws.example.com
-      container: my_ws_app
-      port: 3000
-      websocket: true
+ws.example.com:
+  container: my_ws_app
+  port: 3000
+  websocket: true
+  protocol: http
+
+domain.tld:
+  container: name
+  port: 1234
+  protocol: http # https
+  websocket: true # false
+
 ```
 
 #### Environment Variables:
