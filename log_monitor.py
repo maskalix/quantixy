@@ -4,51 +4,41 @@ import subprocess
 import re
 import os
 import sys
+import yaml
 from pathlib import Path
 
+import utils
+
 # Configuration
-SERVICES_CONFIG = "/etc/quantixy/services.yaml"
 NGINX_ACCESS_LOG = "/var/log/nginx/access.log"
 TIMEOUT_MINUTES = int(os.getenv('TIMEOUT_MINUTES', '10'))
 
 def load_services_config():
-    """Load and return the services configuration from YAML using yq"""
+    """Load and return the services configuration from YAML using native Python libraries"""
     try:
-        print("🔧 Loading services config using yq...")
-        # Use yq to get just the domain names first
-        result = subprocess.run(['yq', 'e', 'keys | .[]', SERVICES_CONFIG], 
-                              capture_output=True, text=True, timeout=10)
-        if result.returncode != 0:
-            print(f"❌ Failed to read domain keys: {result.stderr}")
+        print("🔧 Loading services config using env var and yaml...")
+        services_data = utils.load_services_config()
+
+        if not services_data:
+            print("❌ Services configuration is empty or invalid")
             return {}
-        
-        domains = [line.strip() for line in result.stdout.split('\n') if line.strip()]
-        print(f"📋 Found domains: {domains}")
-        
+
         config = {}
-        for domain in domains:
-            # Get container name for this domain
-            result = subprocess.run(['yq', 'e', f'."{domain}".container', SERVICES_CONFIG], 
-                                  capture_output=True, text=True, timeout=5)
-            if result.returncode == 0 and result.stdout.strip():
-                container = result.stdout.strip()
-                
-                # Get port for this domain
-                result = subprocess.run(['yq', 'e', f'."{domain}".port', SERVICES_CONFIG], 
-                                      capture_output=True, text=True, timeout=5)
-                port = result.stdout.strip() if result.returncode == 0 else '80'
-                
+        for domain, service in services_data.items():
+            container = service.get('container')
+            port = service.get('port', '80')  # Default to port 80 if not specified
+            if container:
                 config[domain] = {
                     'container': container,
                     'port': port
                 }
                 print(f"   {domain} -> {container}:{port}")
-        
+            else:
+                print(f"⚠️ Skipping domain {domain} due to missing container mapping")
+
         return config
     except Exception as e:
-        print(f"❌ Failed to load services config: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"❌ Unexpected error: {e}")
         return {}
 
 def start_container(domain, services_config):
@@ -134,13 +124,6 @@ def monitor_logs():
     print("🔍 Starting Python log monitoring...")
     print(f"🔧 Python version: {sys.version}")
     
-    # Test subprocess
-    try:
-        result = subprocess.run(['yq', '--version'], capture_output=True, text=True, timeout=5)
-        print(f"✅ yq version: {result.stdout.strip()}")
-    except Exception as e:
-        print(f"❌ yq test failed: {e}")
-    
     # Load services configuration
     print("📋 Loading services configuration...")
     services_config = load_services_config()
@@ -221,14 +204,7 @@ if __name__ == "__main__":
     try:
         print("🐍 Python log monitor starting...")
         print(f"📁 Working directory: {os.getcwd()}")
-        print(f"📄 Services config path: {SERVICES_CONFIG}")
         print(f"📄 Access log path: {NGINX_ACCESS_LOG}")
-        
-        # Test if files exist
-        if os.path.exists(SERVICES_CONFIG):
-            print(f"✅ Services config file exists")
-        else:
-            print(f"❌ Services config file does not exist!")
             
         if os.path.exists(NGINX_ACCESS_LOG):
             print(f"✅ Access log file exists")

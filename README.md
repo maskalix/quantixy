@@ -19,6 +19,10 @@ services:
     environment:
       - TIMEOUT_MINUTES=1 # Time (in minutes) after which containers will shutdown (after inactivity)
       - VERBOSE_LOGGING=false
+      - QUANTIXY__exemple.com__container: test
+      - QUANTIXY__exemple.com__port: 1234
+      - QUANTIXY__exemple.com__protocol: http
+      - QUANTIXY__exemple.com__websocket: true
       #- LOADING_PAGE_PATH= # If you want custom loading 
 ```
 
@@ -83,19 +87,36 @@ The main configuration is located in `nginx/conf.d/default.conf` and includes:
 
 ### Service Configuration
 
-Services are configured through `services.yaml` (implementation pending). Example structure:
+Services are configured through `services.yaml` (implementation pending) or environment variables. Example structure:
 
+#### service.yaml:
 ```yaml
-services:
-      domain: example.com
-      container: my_example_app
-      port: 8000
-      websocket: false
+example.com:
+  container: my_example_app
+  port: 8000
+  websocket: false
+  protocol: http
 
-      domain: ws.example.com
-      container: my_ws_app
-      port: 3000
-      websocket: true
+ws.example.com:
+  container: my_ws_app
+  port: 3000
+  websocket: true
+  protocol: http
+
+domain.tld:
+  container: name
+  port: 1234
+  protocol: http # https
+  websocket: true # false
+
+```
+
+#### Environment Variables:
+```yaml
+QUANTIXY__domain.do__container: container_name
+QUANTIXY__domain.do__port: 80 # container_port
+QUANTIXY__domain.do__protocol: http # container_service: http or https
+QUANTIXY__domain.do__websocket: true # container_use_websocket: true or false
 ```
 
 ## 🔗 Endpoints

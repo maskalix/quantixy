@@ -11,11 +11,39 @@ VERBOSE_LOGGING=${VERBOSE_LOGGING:-"false"}
 export TIMEOUT_MINUTES
 export VERBOSE_LOGGING
 
+# Genrate services.yaml from environment variables
+generate_yaml_from_env() {
+    local prefix="QUANTIXY__"
+    local yaml_content=""
+
+    for env_var in $(env | grep "^${prefix}"); do
+        # Extract the key and value
+        key=$(echo "$env_var" | cut -d= -f1)
+        value=$(echo "$env_var" | cut -d= -f2-)
+
+        # Remove the prefix and convert to YAML structure
+        key_without_prefix=${key#${prefix}}
+        domain=$(echo "$key_without_prefix" | cut -d'__' -f1)
+        subkey=$(echo "$key_without_prefix" | cut -d'__' -f2- | tr '[:upper:]' '[:lower:]')
+
+        # if yaml_content does not contain the domain, add it
+        if [[ ! "$yaml_content" =~ ^[[:space:]]*${domain}: ]]; then
+            yaml_content+="${domain}:\n"
+        fi
+
+        # Append to YAML content
+        yaml_content+="  ${subkey#__}: \"${value}\"\n"
+    done
+
+    # Output the generated YAML
+    echo -e "$yaml_content"
+}
+
 # Function to start a container
 start_container() {
     local domain=$1
-    local container_name=$(yq e ".${domain}.container" $SERVICES_CONFIG)
-    local container_port=$(yq e ".${domain}.port" $SERVICES_CONFIG)
+    local container_name=$(yq e ".${domain}.container" /tmp/merged_services.yaml)
+    local container_port=$(yq e ".${domain}.port" /tmp/merged_services.yaml)
 
     if [ -z "$container_name" ] || [ "$container_name" == "null" ]; then
         echo "❌ No container mapping found for domain $domain"
@@ -63,7 +91,7 @@ stop_container() {
 # Create a timestamp file for each service to track last access
 touch_last_access_file() {
     local domain=$1
-    local container_name=$(yq e ".${domain}.container" $SERVICES_CONFIG)
+    local container_name=$(yq e ".${domain}.container" /tmp/merged_services.yaml)
     if [ -n "$container_name" ] && [ "$container_name" != "null" ]; then
         mkdir -p /tmp/quantixy_last_access
         touch "/tmp/quantixy_last_access/${container_name}"
@@ -127,24 +155,18 @@ server {
 }
 
 EOF
-
-    # Generate server blocks for each domain in services.yaml
-    #echo "🔧 DEBUG: Reading domains from services.yaml..."
-    #echo "🔧 DEBUG: Services config content:"
-    #cat "$SERVICES_CONFIG"
-
     # Use a temporary file to build the dynamic configs
     temp_config="/tmp/dynamic_servers.conf"
     >"$temp_config" # Clear temp file
 
     # Get all domains and process them
-    yq e 'keys | .[]' $SERVICES_CONFIG | while IFS= read -r domain; do
+    yq e 'keys | .[]' /tmp/merged_services.yaml | while IFS= read -r domain; do
         if [ -n "$domain" ]; then
             #echo "🔧 DEBUG: Processing domain: '$domain'"
-            container_name=$(yq e ".[\"${domain}\"].container" $SERVICES_CONFIG)
-            port=$(yq e ".[\"${domain}\"].port" $SERVICES_CONFIG)
-            protocol=$(yq e ".[\"${domain}\"].protocol // \"http\"" $SERVICES_CONFIG)
-            websocket=$(yq e ".[\"${domain}\"].websocket // false" $SERVICES_CONFIG)
+            container_name=$(yq e ".[\"${domain}\"].container" /tmp/merged_services.yaml)
+            port=$(yq e ".[\"${domain}\"].port" /tmp/merged_services.yaml)
+            protocol=$(yq e ".[\"${domain}\"].protocol // \"http\"" /tmp/merged_services.yaml)
+            websocket=$(yq e ".[\"${domain}\"].websocket // false" /tmp/merged_services.yaml)
 
             #echo "🔧 DEBUG: Domain '$domain' -> container: '$container_name', port: '$port'"
 
@@ -229,8 +251,24 @@ EOF
     fi
 }
 
+echo "générating /tmp/generated_services.yaml from environment variables..."
+# Generate YAML from environment variables
+generated_yaml=$(generate_yaml_from_env)
+
+if [ "$VERBOSE_LOGGING" = "true" ]; then
+    echo "🔧 DEBUG: Generated YAML content:"
+    echo "$generated_yaml"
+fi
+
+# Use yq to process the generated YAML
+echo "$generated_yaml" > /tmp/generated_services.yaml
+
+echo "merge /tmp/generated_services.yaml with $SERVICES_CONFIG..."
+yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' /tmp/generated_services.yaml $SERVICES_CONFIG > /tmp/merged_services.yaml
+
+
 # Generate NGINX configuration from services.yaml
-echo "Generating NGINX configuration from services.yaml..."
+echo "Generating NGINX configuration from /tmp/merged_services.yaml..."
 generate_nginx_config
 
 # Ensure log file exists before starting NGINX
@@ -259,7 +297,7 @@ echo "Services configuration: $SERVICES_CONFIG"
 echo "Timeout set to: $TIMEOUT_MINUTES minutes"
 
 # Initialize last access times for all configured containers
-yq e 'keys | .[]' $SERVICES_CONFIG | while read domain; do
+yq e 'keys | .[]' /tmp/merged_services.yaml | while read domain; do
     touch_last_access_file "$domain"
 done
 
@@ -268,8 +306,8 @@ done
     while true; do
         sleep 60 # Check every minute
         # Iterate over configured domains
-        yq e 'keys | .[]' $SERVICES_CONFIG | while read domain; do
-            container_name=$(yq e ".${domain}.container" $SERVICES_CONFIG)
+        yq e 'keys | .[]' /tmp/merged_services.yaml | while read domain; do
+            container_name=$(yq e ".${domain}.container" /tmp/merged_services.yaml)
             if [ -z "$container_name" ] || [ "$container_name" == "null" ]; then
                 continue
             fi
