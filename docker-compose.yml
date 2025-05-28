@@ -15,3 +15,9 @@ services:
       QUANTIXY__exemple.com__port: 1234
       QUANTIXY__exemple.com__protocol: http
       QUANTIXY__exemple.com__websocket: true
+    healthcheck:
+      test: curl --fail http://localhost:80/health || exit 1
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

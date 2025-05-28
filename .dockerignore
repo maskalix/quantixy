@@ -1,0 +1,7 @@
+github
+.idea
+.vscode
+Dockerfile
+docker-compose.yml
+LICENSE
+.dockerignore
