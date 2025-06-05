@@ -104,7 +104,7 @@ domain.tld:
   protocol: http # https
   websocket: true # false
 ```
-
+PLANNED:
 #### Environment Variables:
 ```yaml
 QUANTIXY__domain.do__container: container_name
