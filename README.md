@@ -86,16 +86,31 @@ The main configuration is located in `nginx/conf.d/default.conf` and includes:
 Services are configured through `services.yaml` (implementation pending). Example structure:
 
 ```yaml
-services:
-      domain: example.com
-      container: my_example_app
-      port: 8000
-      websocket: false
+example.com:
+  container: my_example_app
+  port: 8000
+  websocket: false
+  protocol: http
 
-      domain: ws.example.com
-      container: my_ws_app
-      port: 3000
-      websocket: true
+ws.example.com:
+  container: my_ws_app
+  port: 3000
+  websocket: true
+  protocol: http
+
+domain.tld:
+  container: name
+  port: 1234
+  protocol: http # https
+  websocket: true # false
+```
+
+#### Environment Variables:
+```yaml
+QUANTIXY__domain.do__container: container_name
+QUANTIXY__domain.do__port: 80 # container_port
+QUANTIXY__domain.do__protocol: http # container_service: http or https
+QUANTIXY__domain.do__websocket: true # container_use_websocket: true or false
 ```
 
 ## 🔗 Endpoints
