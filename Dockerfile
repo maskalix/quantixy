@@ -1,10 +1,11 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.26.10-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.26.10-alpine AS build
+ARG TARGETOS TARGETARCH
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 COPY *.go loading.html ./
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /quantixy .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /quantixy .
 
 FROM scratch
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
