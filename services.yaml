@@ -1,5 +1,14 @@
+# domain:                    # exact Host header (port ignored, case-insensitive)
+#   container: name          # docker container to start/stop (required)
+#   port: 80                 # port inside the container (required)
+#   protocol: http           # http (default) | https
+#   websocket: false         # allow WebSocket upgrades
+#   host: name               # upstream hostname, defaults to the container name
+#   timeout: 30m             # idle timeout for this service, defaults to TIMEOUT_MINUTES
+#   insecure_skip_verify: false  # https upstreams with self-signed certs
+
 domain.tld:
   container: name
   port: 1234
-  protocol: http # https
-  websocket: true # false
+  protocol: http
+  websocket: true

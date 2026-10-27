@@ -1,0 +1,7 @@
+*
+!go.mod
+!go.sum
+!*.go
+!loading.html
+!services.yaml
+*_test.go

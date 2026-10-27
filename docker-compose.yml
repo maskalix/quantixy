@@ -1,13 +1,64 @@
-services:  
+services:
   quantixy:
     build: .
+    image: maskalicz/quantixy:latest
     container_name: quantixy
+    restart: unless-stopped
+    depends_on: [docker-proxy]
     ports:
-      - 8888:80
+      # host:container — the container side must match PORT. Only your front proxy
+      # should reach this port (firewall it, or "127.0.0.1:8888:8080" if the front
+      # proxy is on this host): whoever reaches it directly skips the front proxy.
+      - 8888:8080
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./services.yaml:/etc/quantixy/services.yaml
+      - ./services.yaml:/etc/quantixy/services.yaml:ro
     environment:
-      - TIMEOUT_MINUTES=10  
+      - PORT=8080 # port Quantixy listens on inside the container
+      - DOCKER_HOST=tcp://docker-proxy:2375
+      - TIMEOUT_MINUTES=10
       - VERBOSE_LOGGING=false
-      #- LOADING_PAGE_PATH=
+      # - TRUSTED_PROXIES=192.168.1.10 # exact IP(s) of your front proxy, so apps get the real client IP
+      - MAX_CONNECTIONS=1024 # open client connections, incl. WebSockets and requests waiting for a start
+      - GOMEMLIMIT=96MiB
+      # - LOADING_PAGE_PATH=/etc/quantixy/loading.html
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    pids_limit: 64
+    networks:
+      - docker-proxy
+      - apps # Quantixy reaches containers by name, so it must share a network with them
+
+  # The only thing that touches the Docker socket. It lets through exactly three
+  # calls — container inspect, start and stop — and only from Quantixy.
+  # Everything else (create, exec, kill, delete, images, …) gets 403.
+  docker-proxy:
+    image: wollomatic/socket-proxy:1.13.2
+    container_name: quantixy-docker-proxy
+    restart: unless-stopped
+    user: "65534:${DOCKER_GID:-999}" # gid owning docker.sock: `getent group docker | cut -d: -f3`
+    command:
+      - '-listenip=0.0.0.0'
+      - '-allowfrom=quantixy'
+      - '-allowGET=(/v1\.[0-9]+)?/containers/[a-zA-Z0-9][a-zA-Z0-9_.-]*/json'
+      - '-allowPOST=(/v1\.[0-9]+)?/containers/[a-zA-Z0-9][a-zA-Z0-9_.-]*/(start|stop)'
+      - '-allowhealthcheck'
+      - '-watchdoginterval=600'
+      - '-stoponwatchdog'
+    healthcheck:
+      test: ["CMD", "./healthcheck"]
+      interval: 30s
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    networks: [docker-proxy]
+
+networks:
+  docker-proxy:
+    internal: true # no outside access, only Quantixy can reach the proxy
+  apps:
+    external: true # your existing network with the app containers

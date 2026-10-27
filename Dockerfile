@@ -1,41 +1,16 @@
-FROM nginx:stable-alpine
+# syntax=docker/dockerfile:1
+FROM golang:1.26.10-alpine AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+COPY *.go loading.html ./
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /quantixy .
 
-# Install required packages
-RUN apk add --no-cache \
-    docker-cli \
-    bash \
-    curl \
-    yq \
-    python3
-
-# Create required directories and log files
-RUN mkdir -p /etc/quantixy /tmp/quantixy_last_access /app /var/log/nginx && \
-    touch /var/log/nginx/access.log /var/log/nginx/error.log
-
-# Copy NGINX configuration
-COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
-
-# Copy HTML loading page
-COPY html/loading.html /usr/share/nginx/html/loading.html
-
-# Copy the entire html folder
-COPY html/ /app/html/
-
-# Copy services.yaml
+FROM scratch
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /quantixy /quantixy
 COPY services.yaml /etc/quantixy/services.yaml
-
-# Copy Python log monitor
-COPY log_monitor.py /app/log_monitor.py
-
-# Copy inactivity monitor
-COPY inactivity_monitor.py /app/inactivity_monitor.py
-
-# Copy entrypoint script and make it executable
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Expose port 80
-EXPOSE 80
-
-# Run entrypoint script
-ENTRYPOINT ["/entrypoint.sh"]
+USER 65532:65532
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s CMD ["/quantixy", "-health"]
+ENTRYPOINT ["/quantixy"]
